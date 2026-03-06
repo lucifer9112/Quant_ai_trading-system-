@@ -1,0 +1,12 @@
+symbol: RELIANCE
+
+database:
+  duckdb: data/market.db
+  influxdb: http://localhost:8086
+
+model:
+  autogluon_path: models/autogluon
+
+trading:
+  initial_capital: 100000
+  risk_per_trade: 0.02
