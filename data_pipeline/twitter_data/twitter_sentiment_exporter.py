@@ -20,6 +20,16 @@ class TwitterSentimentExporter:
         self.cleaner = cleaner or TweetCleaner()
         self.scorer = scorer or TwitterSentiment()
 
+    @staticmethod
+    def _normalize_dates(values):
+
+        dates = pd.to_datetime(values, errors="coerce")
+
+        if getattr(dates.dt, "tz", None) is not None:
+            dates = dates.dt.tz_localize(None)
+
+        return dates.dt.normalize()
+
     def build_records(self, universe, limit_per_symbol=50):
 
         records = []
@@ -48,6 +58,7 @@ class TwitterSentimentExporter:
 
         frame = pd.DataFrame(records, columns=self.OUTPUT_COLUMNS)
         if not frame.empty:
+            frame["Date"] = self._normalize_dates(frame["Date"])
             frame = frame.dropna(subset=["Date"]).sort_values(["Date", "symbol"]).reset_index(drop=True)
 
         return frame

@@ -18,6 +18,16 @@ class NewsSentimentExporter:
         self.scorer = scorer or NewsSentiment()
 
     @staticmethod
+    def _normalize_dates(values):
+
+        dates = pd.to_datetime(values, errors="coerce")
+
+        if getattr(dates.dt, "tz", None) is not None:
+            dates = dates.dt.tz_localize(None)
+
+        return dates.dt.normalize()
+
+    @staticmethod
     def _matches_asset(text, asset):
 
         pattern = re.escape(asset.symbol.lower())
@@ -50,6 +60,7 @@ class NewsSentimentExporter:
 
         frame = pd.DataFrame(records, columns=self.OUTPUT_COLUMNS)
         if not frame.empty:
+            frame["Date"] = self._normalize_dates(frame["Date"])
             frame = frame.dropna(subset=["Date"]).sort_values(["Date", "symbol"]).reset_index(drop=True)
 
         return frame

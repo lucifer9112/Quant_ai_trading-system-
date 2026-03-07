@@ -14,6 +14,16 @@ class SentimentFusionPipeline:
         self.smoothing_window = max(1, smoothing_window)
 
     @staticmethod
+    def _normalize_dates(values):
+
+        dates = pd.to_datetime(values, errors="coerce")
+
+        if getattr(dates.dt, "tz", None) is not None:
+            dates = dates.dt.tz_localize(None)
+
+        return dates.dt.normalize()
+
+    @staticmethod
     def _prepare_symbol_frame(df, prefix):
 
         if df is None or len(df) == 0:
@@ -26,7 +36,7 @@ class SentimentFusionPipeline:
                 f"{prefix} sentiment data must include 'Date', 'symbol', and 'sentiment' columns."
             )
 
-        frame["Date"] = pd.to_datetime(frame["Date"], errors="coerce")
+        frame["Date"] = SentimentFusionPipeline._normalize_dates(frame["Date"])
         frame = frame.dropna(subset=["Date", "symbol"])
 
         aggregated = (
@@ -56,7 +66,7 @@ class SentimentFusionPipeline:
                 "sector sentiment data must include 'Date', 'sector', and 'sentiment' columns."
             )
 
-        frame["Date"] = pd.to_datetime(frame["Date"], errors="coerce")
+        frame["Date"] = SentimentFusionPipeline._normalize_dates(frame["Date"])
         frame = frame.dropna(subset=["Date", "sector"])
 
         aggregated = (
@@ -90,7 +100,7 @@ class SentimentFusionPipeline:
     def enrich(self, panel_df, news_df=None, twitter_df=None, sector_df=None):
 
         panel = panel_df.copy()
-        panel["Date"] = pd.to_datetime(panel["Date"], errors="coerce")
+        panel["Date"] = self._normalize_dates(panel["Date"])
 
         if "sector" not in panel.columns:
             panel["sector"] = "UNKNOWN"

@@ -47,3 +47,24 @@ def test_sentiment_fusion_defaults_to_neutral_when_inputs_absent():
 
     assert float(result.loc[0, "sentiment_composite"]) == 0.0
     assert float(result.loc[0, "sentiment_confidence"]) == 0.0
+
+
+def test_sentiment_fusion_normalizes_timezone_aware_sentiment_dates_before_merge():
+
+    panel = pd.DataFrame({
+        "Date": pd.to_datetime(["2024-01-01"]),
+        "symbol": ["AAA"],
+        "sector": ["Tech"],
+    })
+
+    news = pd.DataFrame({
+        "Date": pd.to_datetime(["2024-01-01T08:30:00+05:30"]),
+        "symbol": ["AAA"],
+        "sentiment": [0.6],
+    })
+
+    result = SentimentFusionPipeline(smoothing_window=1).enrich(panel, news_df=news)
+
+    assert pd.api.types.is_datetime64_any_dtype(result["Date"])
+    assert result["Date"].dt.tz is None
+    assert float(result.loc[0, "news_sentiment"]) == 0.6

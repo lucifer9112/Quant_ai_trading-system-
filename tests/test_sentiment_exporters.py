@@ -1,3 +1,5 @@
+import pandas as pd
+
 from core.schemas import AssetMetadata
 from core.universe import UniverseDefinition
 from data_pipeline.news_data.news_sentiment_exporter import NewsSentimentExporter
@@ -72,6 +74,36 @@ def test_news_sentiment_exporter_emits_symbol_shaped_rows():
     assert len(result) == 1
     assert result.loc[0, "symbol"] == "RELIANCE"
     assert float(result.loc[0, "sentiment"]) == 0.5
+
+
+def test_news_sentiment_exporter_normalizes_timezone_aware_dates():
+
+    class TimezoneAwareNewsCollector:
+
+        def collect(self):
+
+            return [
+                {
+                    "title": "RELIANCE publishes earnings",
+                    "link": "https://example.com/reliance-earnings",
+                    "published": "2024-01-01T09:15:00+05:30",
+                }
+            ]
+
+    universe = UniverseDefinition(
+        name="demo",
+        assets=(AssetMetadata(symbol="RELIANCE", sector="Energy"),),
+    )
+
+    exporter = NewsSentimentExporter(
+        collector=TimezoneAwareNewsCollector(),
+        scorer=StubNewsScorer(),
+    )
+    result = exporter.build_records(universe)
+
+    assert pd.api.types.is_datetime64_any_dtype(result["Date"])
+    assert result["Date"].dt.tz is None
+    assert result.loc[0, "Date"] == pd.Timestamp("2024-01-01")
 
 
 def test_twitter_sentiment_exporter_emits_symbol_shaped_rows():
