@@ -37,6 +37,43 @@ backtesting:
   take_profit_pct: 0.10
   max_drawdown_pct: 0.20
 
+risk_management:
+  # Kelly Criterion Settings
+  kelly:
+    enabled: true
+    max_kelly_fraction: 0.25
+    safety_factor: 2.0  # Use half-kelly (full kelly / 2)
+    min_win_rate: 0.40
+    min_trades: 20
+  
+  # Position Sizing
+  position_sizing:
+    method: "risk_parity"  # risk_parity, kelly, volatility_target
+    max_position_weight: 0.25
+    max_leverage: 2.0
+    volatility_target: 0.15
+  
+  # Portfolio-Level Risk
+  portfolio:
+    max_drawdown_pct: 0.20
+    var_confidence: 0.95
+    max_concentration: 0.30
+    max_sector_concentration: 0.50
+
+metrics:
+  # Performance Metrics
+  risk_free_rate: 0.04
+  trading_days_per_year: 252
+  
+  # Risk Metrics
+  var_percentiles: [0.95, 0.99]
+  
+  # Drawdown Analysis
+  analyze_drawdowns: true
+  
+  # Trade Analysis
+  analyze_trades: true
+
 sentiment:
   news_path: data/sentiment/news_sentiment.csv
   twitter_path: data/sentiment/twitter_sentiment.csv
