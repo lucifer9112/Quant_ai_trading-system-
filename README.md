@@ -1,4 +1,4 @@
-# Quant AI Trading System
+﻿# Quant AI Trading System
 
 This project is a modular AI-driven trading research platform.
 
@@ -13,6 +13,10 @@ This project is a modular AI-driven trading research platform.
 - Portfolio simulation
 - Dashboards
 - Docker deployment
+
+## Full Documentation
+
+See docs/PROJECT_HANDBOOK.md for the full architecture, dataflow, module, configuration, and workflow reference.
 
 ## Run
 
@@ -49,3 +53,6 @@ This writes:
 - `data/sentiment/news_sentiment.csv`
 - `data/sentiment/twitter_sentiment.csv`
 - `data/sentiment/sector_sentiment.csv`
+
+If Twitter collection is unavailable or `snscrape` is incompatible with the current Python runtime, the command will still complete and write empty Twitter sentiment inputs instead of failing the whole pipeline.
+

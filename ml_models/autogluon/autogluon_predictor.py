@@ -26,7 +26,7 @@ class AutoGluonPredictor:
             from autogluon.tabular import TabularPredictor
         except ModuleNotFoundError as exc:
             raise RuntimeError(
-                "autogluon is not installed. Install it with `pip install autogluon`."
+                "autogluon is not installed. Install it with `pip install autogluon.tabular`."
             ) from exc
 
         self._predictor = TabularPredictor.load(self.model_path)

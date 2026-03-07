@@ -47,6 +47,20 @@ def build_sector_sentiment(news_df, twitter_df):
     )
 
 
+def build_with_fallback(label, builder, columns):
+
+    try:
+        frame = builder()
+    except Exception as exc:
+        logger.warning("Skipping %s sentiment inputs: %s", label, exc)
+        frame = pd.DataFrame(columns=columns)
+
+    if frame is None:
+        frame = pd.DataFrame(columns=columns)
+
+    return frame
+
+
 def main():
 
     args = parse_args()
@@ -59,10 +73,18 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Building news sentiment inputs")
-    news_df = NewsSentimentExporter().build_records(universe)
+    news_df = build_with_fallback(
+        "news",
+        lambda: NewsSentimentExporter().build_records(universe),
+        NewsSentimentExporter.OUTPUT_COLUMNS,
+    )
 
     logger.info("Building Twitter sentiment inputs")
-    twitter_df = TwitterSentimentExporter().build_records(universe, limit_per_symbol=args.twitter_limit)
+    twitter_df = build_with_fallback(
+        "Twitter",
+        lambda: TwitterSentimentExporter().build_records(universe, limit_per_symbol=args.twitter_limit),
+        TwitterSentimentExporter.OUTPUT_COLUMNS,
+    )
 
     logger.info("Building sector sentiment inputs")
     sector_df = build_sector_sentiment(news_df, twitter_df)

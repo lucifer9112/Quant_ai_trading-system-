@@ -11,7 +11,7 @@ ta
 feedparser
 transformers
 sentence-transformers
-autogluon
+autogluon.tabular
 textblob
 snscrape
 lux-api

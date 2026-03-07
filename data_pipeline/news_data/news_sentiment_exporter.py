@@ -9,6 +9,8 @@ from feature_engineering.sentiment_features.news_sentiment import NewsSentiment
 
 class NewsSentimentExporter:
 
+    OUTPUT_COLUMNS = ["Date", "symbol", "sector", "sentiment", "source", "text", "link"]
+
     def __init__(self, collector=None, cleaner=None, scorer=None):
 
         self.collector = collector or NewsCollector()
@@ -46,7 +48,7 @@ class NewsSentimentExporter:
                     "link": item["link"],
                 })
 
-        frame = pd.DataFrame(records)
+        frame = pd.DataFrame(records, columns=self.OUTPUT_COLUMNS)
         if not frame.empty:
             frame = frame.dropna(subset=["Date"]).sort_values(["Date", "symbol"]).reset_index(drop=True)
 

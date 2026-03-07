@@ -38,7 +38,8 @@ class NSEDownloader:
             self.symbol,
             start=start,
             end=end,
-            progress=False
+            progress=False,
+            auto_adjust=False
         )
 
         if isinstance(df.columns, pd.MultiIndex):

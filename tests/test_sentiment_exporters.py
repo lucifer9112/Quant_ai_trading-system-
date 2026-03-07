@@ -48,6 +48,13 @@ class StubTwitterScorer:
         return 0.25
 
 
+class FailingTwitterCollector:
+
+    def search(self, query, limit=100):
+
+        raise RuntimeError("snscrape could not be imported")
+
+
 def test_news_sentiment_exporter_emits_symbol_shaped_rows():
 
     universe = UniverseDefinition(
@@ -84,3 +91,20 @@ def test_twitter_sentiment_exporter_emits_symbol_shaped_rows():
     assert len(result) == 1
     assert result.loc[0, "symbol"] == "INFY"
     assert float(result.loc[0, "sentiment"]) == 0.25
+
+
+def test_twitter_sentiment_exporter_returns_empty_frame_when_collection_unavailable():
+
+    universe = UniverseDefinition(
+        name="demo",
+        assets=(AssetMetadata(symbol="TCS", sector="Information Technology"),),
+    )
+
+    exporter = TwitterSentimentExporter(
+        collector=FailingTwitterCollector(),
+        scorer=StubTwitterScorer(),
+    )
+    result = exporter.build_records(universe, limit_per_symbol=1)
+
+    assert list(result.columns) == TwitterSentimentExporter.OUTPUT_COLUMNS
+    assert result.empty
