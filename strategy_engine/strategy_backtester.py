@@ -1,34 +1,16 @@
-import pandas as pd
+from backtesting.engine.advanced_backtester import AdvancedBacktester
 
 
 class StrategyBacktester:
 
-    def backtest(self, df):
+    def __init__(self, **backtester_kwargs):
 
-        capital = 100000
-        position = 0
+        self.engine = AdvancedBacktester(**backtester_kwargs)
 
-        portfolio = []
+    def backtest(self, df, signal_column="strategy_score"):
 
-        for i in range(len(df)):
+        result = self.engine.backtest(df, signal_column=signal_column)
+        equity_curve = result.equity_curve.copy()
+        equity_curve.attrs["metrics"] = result.metrics
 
-            signal = df["strategy_score"].iloc[i]
-            price = df["Close"].iloc[i]
-
-            if signal > 0.5 and position == 0:
-
-                position = capital / price
-                capital = 0
-
-            elif signal < -0.5 and position > 0:
-
-                capital = position * price
-                position = 0
-
-            value = capital + position * price
-
-            portfolio.append(value)
-
-        df["portfolio_value"] = portfolio
-
-        return df
+        return equity_curve

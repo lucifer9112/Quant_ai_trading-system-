@@ -1,9 +1,13 @@
-import snscrape.modules.twitter as sntwitter
-
-
 class TwitterCollector:
 
     def search(self, query, limit=100):
+
+        try:
+            import snscrape.modules.twitter as sntwitter
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "snscrape is not installed. Install it with `pip install snscrape`."
+            ) from exc
 
         tweets = []
 

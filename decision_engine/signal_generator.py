@@ -20,3 +20,9 @@ class SignalGenerator:
         df["final_signal"] = signals
 
         return df
+
+    def generate_latest(self, df):
+
+        row = df.iloc[-1] if hasattr(df, "iloc") else df
+
+        return self.model.decide(row)

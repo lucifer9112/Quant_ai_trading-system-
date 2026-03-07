@@ -1,0 +1,13 @@
+name: nse_largecap
+start_date: "2015-01-01"
+assets:
+  - symbol: RELIANCE
+    sector: Energy
+  - symbol: TCS
+    sector: Information Technology
+  - symbol: INFY
+    sector: Information Technology
+  - symbol: HDFCBANK
+    sector: Financials
+  - symbol: ICICIBANK
+    sector: Financials

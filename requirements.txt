@@ -8,6 +8,7 @@ yfinance
 streamlit
 matplotlib
 ta
+feedparser
 transformers
 sentence-transformers
 autogluon
@@ -16,3 +17,5 @@ snscrape
 lux-api
 mlflow
 psutil
+gymnasium
+stable-baselines3

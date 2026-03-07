@@ -1,7 +1,3 @@
-# News cleaner module
-
-def clean(text):
-    pass
 import re
 
 

@@ -18,6 +18,8 @@ This project is a modular AI-driven trading research platform.
 
 python main.py
 
+The default config now uses the multi-asset research path with advanced backtesting enabled.
+
 ## Train AutoGluon Model
 
 Train and save the model artifacts expected by `main.py`:
@@ -35,3 +37,15 @@ Optional arguments:
 After training, run:
 
 python main.py
+
+## Build Sentiment Inputs
+
+Generate the sentiment CSV files consumed by the fusion pipeline:
+
+python apps/data/build_sentiment_inputs.py
+
+This writes:
+
+- `data/sentiment/news_sentiment.csv`
+- `data/sentiment/twitter_sentiment.csv`
+- `data/sentiment/sector_sentiment.csv`

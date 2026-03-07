@@ -1,4 +1,3 @@
-import yfinance as yf
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
@@ -11,10 +10,23 @@ class NSEDownloader:
         self._configure_yfinance_cache()
 
     @staticmethod
-    def _configure_yfinance_cache():
+    def _yfinance_module():
+
+        try:
+            import yfinance as yf
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "yfinance is not installed. Install it with `pip install yfinance`."
+            ) from exc
+
+        return yf
+
+    @classmethod
+    def _configure_yfinance_cache(cls):
 
         cache_dir = Path(".cache") / "yfinance"
         cache_dir.mkdir(parents=True, exist_ok=True)
+        yf = cls._yfinance_module()
         yf.set_tz_cache_location(str(cache_dir.resolve()))
 
     def download(self, start="2015-01-01", end=None):
@@ -22,7 +34,7 @@ class NSEDownloader:
         if end is None:
             end = datetime.today().strftime("%Y-%m-%d")
 
-        df = yf.download(
+        df = self._yfinance_module().download(
             self.symbol,
             start=start,
             end=end,
