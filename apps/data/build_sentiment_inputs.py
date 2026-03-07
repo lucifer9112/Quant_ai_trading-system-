@@ -9,6 +9,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.universe import UniverseManager
+from core.runtime import ensure_twitter_runtime_supported
 from data_pipeline.news_data.news_sentiment_exporter import NewsSentimentExporter
 from data_pipeline.twitter_data.twitter_sentiment_exporter import TwitterSentimentExporter
 from utils.config_loader import ConfigLoader
@@ -26,6 +27,11 @@ def parse_args():
     parser.add_argument("--config", default="config.yaml", help="Path to the config file.")
     parser.add_argument("--output-dir", default="data/sentiment", help="Directory for sentiment CSV outputs.")
     parser.add_argument("--twitter-limit", type=int, default=50, help="Tweets to fetch per symbol.")
+    parser.add_argument(
+        "--require-twitter",
+        action="store_true",
+        help="Fail instead of falling back when Twitter sentiment cannot be built.",
+    )
 
     return parser.parse_args()
 
@@ -47,11 +53,13 @@ def build_sector_sentiment(news_df, twitter_df):
     )
 
 
-def build_with_fallback(label, builder, columns):
+def build_with_fallback(label, builder, columns, required=False):
 
     try:
         frame = builder()
     except Exception as exc:
+        if required:
+            raise RuntimeError(f"Required {label} sentiment inputs could not be built: {exc}") from exc
         logger.warning("Skipping %s sentiment inputs: %s", label, exc)
         frame = pd.DataFrame(columns=columns)
 
@@ -80,10 +88,13 @@ def main():
     )
 
     logger.info("Building Twitter sentiment inputs")
+    if args.require_twitter:
+        ensure_twitter_runtime_supported()
     twitter_df = build_with_fallback(
         "Twitter",
         lambda: TwitterSentimentExporter().build_records(universe, limit_per_symbol=args.twitter_limit),
         TwitterSentimentExporter.OUTPUT_COLUMNS,
+        required=args.require_twitter,
     )
 
     logger.info("Building sector sentiment inputs")

@@ -1,7 +1,12 @@
+from core.runtime import ensure_twitter_runtime_supported
+
+
 class TwitterCollector:
 
     @staticmethod
     def _twitter_module():
+
+        ensure_twitter_runtime_supported()
 
         try:
             import snscrape.modules.twitter as sntwitter
