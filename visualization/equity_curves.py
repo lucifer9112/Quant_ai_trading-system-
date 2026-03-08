@@ -41,7 +41,7 @@ class EquityCurveVisualizer:
         benchmark: Optional[List[float]] = None,
         title: str = "Equity Curve",
         save_path: Optional[str] = None,
-    ) -> plt.Figure:
+    ) -> Optional[plt.Figure]:
         """
         Plot equity curve with statistics.
         
@@ -53,43 +53,47 @@ class EquityCurveVisualizer:
             save_path: Optional path to save figure
             
         Returns:
-            matplotlib figure
+            matplotlib figure or None if plotting failed
         """
-        if dates is None:
-            dates = range(len(equity_curve))
-        
-        fig, ax = plt.subplots(figsize=self.figsize)
-        
-        # Main equity curve
-        ax.plot(dates, equity_curve, linewidth=2.5, label='Portfolio', 
-                color='#2E86AB', zorder=3)
-        
-        # Benchmark
-        if benchmark is not None:
-            ax.plot(dates, benchmark, linewidth=2, label='Benchmark', 
-                   color='#A23B72', linestyle='--', alpha=0.7, zorder=2)
-        
-        # Fill between start and equity curve
-        start_value = equity_curve[0]
-        ax.fill_between(dates, start_value, equity_curve, alpha=0.1, 
-                        color='#2E86AB', zorder=1)
-        
-        # Formatting
-        ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
-        ax.set_xlabel('Time', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Portfolio Value ($)', fontsize=12, fontweight='bold')
-        ax.grid(True, alpha=0.3, linestyle='--')
-        ax.legend(loc='upper left', fontsize=11, framealpha=0.95)
-        
-        # Format y-axis as currency
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        
-        return fig
+        try:
+            if dates is None:
+                dates = range(len(equity_curve))
+            
+            fig, ax = plt.subplots(figsize=self.figsize)
+            
+            # Main equity curve
+            ax.plot(dates, equity_curve, linewidth=2.5, label='Portfolio', 
+                    color='#2E86AB', zorder=3)
+            
+            # Benchmark
+            if benchmark is not None:
+                ax.plot(dates, benchmark, linewidth=2, label='Benchmark', 
+                       color='#A23B72', linestyle='--', alpha=0.7, zorder=2)
+            
+            # Fill between start and equity curve
+            start_value = equity_curve[0]
+            ax.fill_between(dates, start_value, equity_curve, alpha=0.1, 
+                            color='#2E86AB', zorder=1)
+            
+            # Formatting
+            ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+            ax.set_xlabel('Time', fontsize=12, fontweight='bold')
+            ax.set_ylabel('Portfolio Value ($)', fontsize=12, fontweight='bold')
+            ax.grid(True, alpha=0.3, linestyle='--')
+            ax.legend(loc='upper left', fontsize=11, framealpha=0.95)
+            
+            # Format y-axis as currency
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+            
+            plt.tight_layout()
+            
+            if save_path:
+                plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            
+            return fig
+        except Exception:
+            logger.exception("plot_equity_curve failed")
+            return None
     
     def plot_equity_with_drawdown(
         self,
@@ -97,7 +101,7 @@ class EquityCurveVisualizer:
         dates: Optional[List] = None,
         title: str = "Equity Curve with Drawdown Bands",
         save_path: Optional[str] = None,
-    ) -> plt.Figure:
+    ) -> Optional[plt.Figure]:
         """
         Plot equity curve with drawdown bands.
         
@@ -108,50 +112,54 @@ class EquityCurveVisualizer:
             save_path: Optional path to save figure
             
         Returns:
-            matplotlib figure
+            matplotlib figure or None if plotting failed
         """
-        if dates is None:
-            dates = range(len(equity_curve))
-        
-        equity_array = np.array(equity_curve)
-        
-        # Calculate running maximum and drawdown
-        running_max = np.maximum.accumulate(equity_array)
-        drawdown = (equity_array - running_max) / running_max
-        
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=self.figsize, 
-                                       gridspec_kw={'height_ratios': [3, 1]})
-        
-        # Top plot: Equity curve with drawdown bands
-        ax1.plot(dates, equity_curve, linewidth=2.5, color='#2E86AB', 
-                label='Portfolio', zorder=3)
-        ax1.fill_between(dates, equity_array[0], equity_curve, alpha=0.1, 
-                        color='#2E86AB', zorder=1)
-        ax1.plot(dates, running_max, linewidth=1.5, color='#F18F01', 
-                linestyle='--', alpha=0.7, label='Peak', zorder=2)
-        
-        ax1.set_title(title, fontsize=16, fontweight='bold', pad=20)
-        ax1.set_ylabel('Portfolio Value ($)', fontsize=12, fontweight='bold')
-        ax1.grid(True, alpha=0.3, linestyle='--')
-        ax1.legend(loc='upper left', fontsize=11)
-        ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
-        
-        # Bottom plot: Drawdown
-        colors = ['#2E86AB' if dd < -0.10 else '#F18F01' if dd < -0.05 else '#06A77D' 
-                 for dd in drawdown]
-        ax2.bar(dates, drawdown * 100, color=colors, alpha=0.7, width=1)
-        ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.8, zorder=1)
-        ax2.set_xlabel('Time', fontsize=12, fontweight='bold')
-        ax2.set_ylabel('Drawdown (%)', fontsize=12, fontweight='bold')
-        ax2.grid(True, alpha=0.3, linestyle='--', axis='y')
-        ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}%'))
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        
-        return fig
+        try:
+            if dates is None:
+                dates = range(len(equity_curve))
+            
+            equity_array = np.array(equity_curve)
+            
+            # Calculate running maximum and drawdown
+            running_max = np.maximum.accumulate(equity_array)
+            drawdown = (equity_array - running_max) / running_max
+            
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=self.figsize, 
+                                           gridspec_kw={'height_ratios': [3, 1]})
+            
+            # Top plot: Equity curve with drawdown bands
+            ax1.plot(dates, equity_curve, linewidth=2.5, color='#2E86AB', 
+                    label='Portfolio', zorder=3)
+            ax1.fill_between(dates, equity_array[0], equity_curve, alpha=0.1, 
+                            color='#2E86AB', zorder=1)
+            ax1.plot(dates, running_max, linewidth=1.5, color='#F18F01', 
+                    linestyle='--', alpha=0.7, label='Peak', zorder=2)
+            
+            ax1.set_title(title, fontsize=16, fontweight='bold', pad=20)
+            ax1.set_ylabel('Portfolio Value ($)', fontsize=12, fontweight='bold')
+            ax1.grid(True, alpha=0.3, linestyle='--')
+            ax1.legend(loc='upper left', fontsize=11)
+            ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+            
+            # Bottom plot: Drawdown
+            colors = ['#2E86AB' if dd < -0.10 else '#F18F01' if dd < -0.05 else '#06A77D' 
+                     for dd in drawdown]
+            ax2.bar(dates, drawdown * 100, color=colors, alpha=0.7, width=1)
+            ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.8, zorder=1)
+            ax2.set_xlabel('Time', fontsize=12, fontweight='bold')
+            ax2.set_ylabel('Drawdown (%)', fontsize=12, fontweight='bold')
+            ax2.grid(True, alpha=0.3, linestyle='--', axis='y')
+            ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}%'))
+            
+            plt.tight_layout()
+            
+            if save_path:
+                plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            
+            return fig
+        except Exception:
+            logger.exception("plot_equity_with_drawdown failed")
+            return None
     
     def plot_underwater(
         self,
@@ -159,7 +167,7 @@ class EquityCurveVisualizer:
         dates: Optional[List] = None,
         title: str = "Underwater Plot (Drawdown Over Time)",
         save_path: Optional[str] = None,
-    ) -> plt.Figure:
+    ) -> Optional[plt.Figure]:
         """
         Underwater plot showing drawdown periods as shaded regions.
         
@@ -170,36 +178,40 @@ class EquityCurveVisualizer:
             save_path: Optional path to save figure
             
         Returns:
-            matplotlib figure
+            matplotlib figure or None if plotting failed
         """
-        if dates is None:
-            dates = range(len(equity_curve))
-        
-        equity_array = np.array(equity_curve)
-        running_max = np.maximum.accumulate(equity_array)
-        drawdown = ((equity_array - running_max) / running_max) * 100
-        
-        fig, ax = plt.subplots(figsize=self.figsize)
-        
-        # Fill underwater areas
-        ax.fill_between(dates, drawdown, 0, where=(drawdown < 0), 
-                       color='#E63946', alpha=0.6, label='Drawdown')
-        ax.plot(dates, drawdown, linewidth=2, color='#1D3557', zorder=2)
-        ax.axhline(y=0, color='black', linestyle='-', linewidth=1)
-        
-        ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
-        ax.set_xlabel('Time', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Drawdown (%)', fontsize=12, fontweight='bold')
-        ax.grid(True, alpha=0.3, linestyle='--')
-        ax.legend(fontsize=11)
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}%'))
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        
-        return fig
+        try:
+            if dates is None:
+                dates = range(len(equity_curve))
+            
+            equity_array = np.array(equity_curve)
+            running_max = np.maximum.accumulate(equity_array)
+            drawdown = ((equity_array - running_max) / running_max) * 100
+            
+            fig, ax = plt.subplots(figsize=self.figsize)
+            
+            # Fill underwater areas
+            ax.fill_between(dates, drawdown, 0, where=(drawdown < 0), 
+                           color='#E63946', alpha=0.6, label='Drawdown')
+            ax.plot(dates, drawdown, linewidth=2, color='#1D3557', zorder=2)
+            ax.axhline(y=0, color='black', linestyle='-', linewidth=1)
+            
+            ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+            ax.set_xlabel('Time', fontsize=12, fontweight='bold')
+            ax.set_ylabel('Drawdown (%)', fontsize=12, fontweight='bold')
+            ax.grid(True, alpha=0.3, linestyle='--')
+            ax.legend(fontsize=11)
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1f}%'))
+            
+            plt.tight_layout()
+            
+            if save_path:
+                plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            
+            return fig
+        except Exception:
+            logger.exception("plot_underwater failed")
+            return None
     
     def plot_cumulative_returns(
         self,

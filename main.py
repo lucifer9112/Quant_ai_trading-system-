@@ -368,32 +368,35 @@ class QuantTradingSystem:
 
             # Generate equity curve figures if available
             if hasattr(backtest_result, "equity_curve") and not backtest_result.equity_curve.empty:
+                # Plot main equity curve separately so a failure doesn't stop the others
                 try:
-                    # Plot main equity curve
                     fig = viz_engines["equity_curves"].plot_equity_curve(
                         backtest_result.equity_curve,
                         title="Strategy Equity Curve"
                     )
                     if fig is not None:
                         figures.append(fig)
-                    
-                    # Plot equity with drawdown
+                except Exception:
+                    logger.exception("plot_equity_curve threw an exception")
+
+                try:
                     fig2 = viz_engines["equity_curves"].plot_equity_with_drawdown(
                         backtest_result.equity_curve,
                         title="Equity Curve with Drawdown"
                     )
                     if fig2 is not None:
                         figures.append(fig2)
-                    
-                    # Plot underwater chart (drawdown analysis)
+                except Exception:
+                    logger.exception("plot_equity_with_drawdown threw an exception")
+
+                try:
                     fig3 = viz_engines["equity_curves"].plot_underwater(
                         backtest_result.equity_curve
                     )
                     if fig3 is not None:
                         figures.append(fig3)
-                        
-                except Exception as exc:
-                    logger.warning("Equity curve visualization failed: %s", exc)
+                except Exception:
+                    logger.exception("plot_underwater threw an exception")
 
             # Generate trade signals figures if available
             if hasattr(backtest_result, "trades") and backtest_result.trades is not None:
