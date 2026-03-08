@@ -104,6 +104,7 @@ visualization:
   enabled: true
   output_dir: "reports"
   dpi: 150
+  style: "whitegrid"  # seaborn styles: darkgrid, whitegrid, dark, white, ticks
   
   # Report Generation
   report:

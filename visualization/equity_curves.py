@@ -19,15 +19,18 @@ import seaborn as sns
 class EquityCurveVisualizer:
     """Generate professional equity curve charts."""
     
-    def __init__(self, figsize: Tuple = (14, 8), style: str = "seaborn"):
+    def __init__(self, figsize: Tuple = (14, 8), style: str = "whitegrid"):
         """
         Args:
             figsize: Figure size
-            style: matplotlib style
+            style: matplotlib style (must be one of seaborn-supported styles: 
+                   darkgrid, whitegrid, dark, white, ticks)
         """
         self.figsize = figsize
-        self.style = style
-        sns.set_style(style)
+        # validate style
+        allowed = ["darkgrid", "whitegrid", "dark", "white", "ticks"]
+        self.style = style if style in allowed else "whitegrid"
+        sns.set_style(self.style)
     
     def plot_equity_curve(
         self,

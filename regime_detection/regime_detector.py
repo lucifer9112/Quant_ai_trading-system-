@@ -103,6 +103,9 @@ class VolatilityRegimeDetector:
         
         # Calculate rolling volatility
         rolling_vol = pd.Series(returns).rolling(self.window).std().values
+        # handle NaNs produced by rolling window (they occur for the first `window-1` entries)
+        if np.isnan(rolling_vol).any():
+            rolling_vol = np.nan_to_num(rolling_vol, nan=0.0)
         
         # Predict regimes
         X = rolling_vol.reshape(-1, 1)

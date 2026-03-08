@@ -19,10 +19,11 @@ import seaborn as sns
 class IndicatorVisualizer:
     """Visualize technical indicators on price charts."""
     
-    def __init__(self, figsize: Tuple = (16, 10), style: str = "seaborn"):
+    def __init__(self, figsize: Tuple = (16, 10), style: str = "whitegrid"):
         self.figsize = figsize
-        self.style = style
-        sns.set_style(style)
+        allowed = ["darkgrid", "whitegrid", "dark", "white", "ticks"]
+        self.style = style if style in allowed else "whitegrid"
+        sns.set_style(self.style)
     
     def plot_price_with_ma(
         self,

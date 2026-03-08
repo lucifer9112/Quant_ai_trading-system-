@@ -18,10 +18,11 @@ import seaborn as sns
 class TradeSignalVisualizer:
     """Visualize trade signals on price charts."""
     
-    def __init__(self, figsize: Tuple = (16, 8), style: str = "seaborn"):
+    def __init__(self, figsize: Tuple = (16, 8), style: str = "whitegrid"):
         self.figsize = figsize
-        self.style = style
-        sns.set_style(style)
+        allowed = ["darkgrid", "whitegrid", "dark", "white", "ticks"]
+        self.style = style if style in allowed else "whitegrid"
+        sns.set_style(self.style)
     
     def plot_price_with_signals(
         self,

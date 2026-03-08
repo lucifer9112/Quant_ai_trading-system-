@@ -231,14 +231,15 @@ class QuantTradingSystem:
         """Build Phase 3 visualization engine"""
 
         viz_config = self.config.get("visualization", {})
+        style = viz_config.get("style", "whitegrid")
 
         return {
             "report": ReportGenerator(
                 output_dir=viz_config.get("output_dir", "reports"),
             ),
-            "equity_curves": EquityCurveVisualizer(),
-            "trade_signals": TradeSignalVisualizer(),
-            "dashboard": PerformanceDashboard(),
+            "equity_curves": EquityCurveVisualizer(style=style),
+            "trade_signals": TradeSignalVisualizer(style=style),
+            "dashboard": PerformanceDashboard(style=style),
         }
 
     def _build_execution_manager(self):
