@@ -27,6 +27,7 @@ portfolio:
   ml_tilt_strength: 0.15
   max_position_weight: 0.25
   max_gross_exposure: 1.0
+  base_weights: {}  # For regime-aware allocation
 
 backtesting:
   enabled: true
@@ -36,36 +37,124 @@ backtesting:
   stop_loss_pct: 0.05
   take_profit_pct: 0.10
   max_drawdown_pct: 0.20
-
-risk_management:
-  # Kelly Criterion Settings
-  kelly:
+  max_position_weight: 0.25
+  min_position_weight: 0.01
+  max_sector_weight: 0.40
+  drift_tolerance: 0.05
+  
+  # Phase 5: Execution Configuration
+  execution:
     enabled: true
-    max_kelly_fraction: 0.25
-    safety_factor: 2.0  # Use half-kelly (full kelly / 2)
+    model: "vwap"  # market, vwap, twap, limit
+    max_slippage_bps: 5.0
+    market_impact_coefficient: 0.001
+
+# Phase 1: Risk Management Configuration
+risk_management:
+  enabled: true
+  
+  # Kelly Criterion Settings
+  kelly_criterion:
+    confidence_threshold: 0.60
+    kelly_fraction: 0.25
     min_win_rate: 0.40
     min_trades: 20
   
-  # Position Sizing
-  position_sizing:
-    method: "risk_parity"  # risk_parity, kelly, volatility_target
-    max_position_weight: 0.25
-    max_leverage: 2.0
-    volatility_target: 0.15
+  # Position Sizing Method
+  position_sizing_method: "kelly"  # kelly, fixed, volatility_target, risk_parity
+  fixed_fraction: 0.02
+  max_position_weight: 0.25
   
-  # Portfolio-Level Risk
-  portfolio:
-    max_drawdown_pct: 0.20
-    var_confidence: 0.95
-    max_concentration: 0.30
-    max_sector_concentration: 0.50
+  # Portfolio Risk Controls
+  lookback_window: 252
+  var_percentile: 95
+  max_sector_weight: 0.40
+  max_sector_concentration: 0.50
+  market_impact_coefficient: 0.001
 
+# Phase 2: ML Models Configuration
+ml_models:
+  enabled: true
+  
+  # Ensemble Configuration
+  ensemble_method: "weighted_average"  # weighted_average, voting, stacking
+  ensemble_weights:
+    autogluon: 0.40
+    cross_asset: 0.30
+    sector: 0.30
+  
+  # Cross-Asset Model
+  cross_asset:
+    enabled: true
+    lookback_window: 252
+    transfer_learning: true
+  
+  # Sector Model
+  sector:
+    enabled: true
+    groupby_column: "sector"
+  
+  # Calibration
+  calibration:
+    enabled: true
+    method: "isotonic"  # isotonic, platt, temperature_scaling
+
+# Phase 3: Visualization Configuration
+visualization:
+  enabled: true
+  output_dir: "reports"
+  dpi: 150
+  
+  # Report Generation
+  report:
+    enabled: true
+    include_equity_curve: true
+    include_drawdown_analysis: true
+    include_trade_analysis: true
+    include_metrics_summary: true
+    include_tear_sheet: true
+
+# Phase 4: Regime Detection Configuration
+regime_detection:
+  enabled: true
+  
+  # Volatility Regime
+  volatility_window: 60
+  volatility_thresholds: [0.10, 0.25]
+  
+  # Trend Regime
+  trend_window: 20
+  trend_long: 50
+  trend_threshold: 0.05
+  
+  # Correlation Regime
+  correlation_window: 60
+  correlation_threshold: 0.50
+  
+  # Regime Switching
+  min_regime_duration: 5  # Minimum bars in regime
+  risk_budget: 0.15  # Target portfolio volatility
+  correlation_threshold: 0.50
+  
+  # Regime Switching
+  min_regime_duration: 5  # Minimum bars in regime
+
+# Metrics Configuration (Phase 1)
 metrics:
-  # Performance Metrics
+  enabled: true
   risk_free_rate: 0.04
+  rolling_window: 252
   trading_days_per_year: 252
   
+  # Performance Metrics
+  calculate_sharpe: true
+  calculate_sortino: true
+  calculate_calmar: true
+  calculate_information_ratio: true
+  
   # Risk Metrics
+  calculate_var: true
+  calculate_cvar: true
   var_percentiles: [0.95, 0.99]
   
   # Drawdown Analysis
@@ -73,6 +162,7 @@ metrics:
   
   # Trade Analysis
   analyze_trades: true
+  min_holding_days: 1
 
 sentiment:
   news_path: data/sentiment/news_sentiment.csv
