@@ -121,7 +121,8 @@ def test_builder_methods():
         # Test metrics builder
         try:
             metrics_engine = system._build_metrics_engine()
-            assert hasattr(metrics_engine, 'calculate')
+            # old versions exposed `calculate`; current API uses `calculate_all_metrics`
+            assert hasattr(metrics_engine, 'calculate_all_metrics')
             print("✅ _build_metrics_engine() works correctly")
             tests_passed += 1
         except Exception as e:
@@ -323,12 +324,13 @@ def test_source_code():
 def main():
     """Run all integration tests"""
     print("\n")
-    print("╔" + "=" * 58 + "╗")
-    print("║" + " " * 58 + "║")
-    print("║" + "INTEGRATION VERIFICATION SUITE".center(58) + "║")
-    print("║" + "All 5 Phases Integration Test".center(58) + "║")
-    print("║" + " " * 58 + "║")
-    print("╚" + "=" * 58 + "╝")
+    # ascii-friendly header avoids unicode encoding issues on Windows
+    print("+" + "=" * 58 + "+")
+    print("|" + " " * 58 + "|")
+    print("|" + "INTEGRATION VERIFICATION SUITE".center(58) + "|")
+    print("|" + "All 5 Phases Integration Test".center(58) + "|")
+    print("|" + " " * 58 + "|")
+    print("+" + "=" * 58 + "+")
     
     total_passed = 0
     total_failed = 0

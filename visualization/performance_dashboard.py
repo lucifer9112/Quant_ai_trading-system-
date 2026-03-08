@@ -10,6 +10,8 @@ Creates comprehensive dashboards with:
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from typing import Dict, List, Optional, Tuple

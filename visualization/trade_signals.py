@@ -10,6 +10,8 @@ Displays:
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 from typing import List, Optional, Tuple
 import seaborn as sns

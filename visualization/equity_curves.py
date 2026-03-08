@@ -10,6 +10,8 @@ Creates publication-quality figures showing:
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from typing import List, Optional, Tuple
