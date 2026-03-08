@@ -368,10 +368,11 @@ class QuantTradingSystem:
 
             # Generate equity curve figures if available
             if hasattr(backtest_result, "equity_curve") and not backtest_result.equity_curve.empty:
+                equity_series = backtest_result.equity_curve.set_index("Date")["portfolio_value"]
                 # Plot main equity curve separately so a failure doesn't stop the others
                 try:
                     fig = viz_engines["equity_curves"].plot_equity_curve(
-                        backtest_result.equity_curve,
+                        equity_series,
                         title="Strategy Equity Curve"
                     )
                     if fig is not None:
@@ -381,7 +382,7 @@ class QuantTradingSystem:
 
                 try:
                     fig2 = viz_engines["equity_curves"].plot_equity_with_drawdown(
-                        backtest_result.equity_curve,
+                        equity_series,
                         title="Equity Curve with Drawdown"
                     )
                     if fig2 is not None:
@@ -391,7 +392,7 @@ class QuantTradingSystem:
 
                 try:
                     fig3 = viz_engines["equity_curves"].plot_underwater(
-                        backtest_result.equity_curve
+                        equity_series
                     )
                     if fig3 is not None:
                         figures.append(fig3)

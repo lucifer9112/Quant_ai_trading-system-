@@ -14,8 +14,11 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 import seaborn as sns
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class EquityCurveVisualizer:
@@ -36,7 +39,7 @@ class EquityCurveVisualizer:
     
     def plot_equity_curve(
         self,
-        equity_curve: List[float],
+        equity_curve: Union[List[float], pd.Series],
         dates: Optional[List] = None,
         benchmark: Optional[List[float]] = None,
         title: str = "Equity Curve",
@@ -46,7 +49,7 @@ class EquityCurveVisualizer:
         Plot equity curve with statistics.
         
         Args:
-            equity_curve: List of portfolio values
+            equity_curve: List of portfolio values or pandas Series
             dates: Optional dates
             benchmark: Optional benchmark equity curve
             title: Plot title
@@ -56,13 +59,20 @@ class EquityCurveVisualizer:
             matplotlib figure or None if plotting failed
         """
         try:
-            if dates is None:
-                dates = range(len(equity_curve))
+            # Handle pandas Series
+            if isinstance(equity_curve, pd.Series):
+                if dates is None:
+                    dates = equity_curve.index
+                equity_values = equity_curve.values
+            else:
+                equity_values = equity_curve
+                if dates is None:
+                    dates = range(len(equity_values))
             
             fig, ax = plt.subplots(figsize=self.figsize)
             
             # Main equity curve
-            ax.plot(dates, equity_curve, linewidth=2.5, label='Portfolio', 
+            ax.plot(dates, equity_values, linewidth=2.5, label='Portfolio', 
                     color='#2E86AB', zorder=3)
             
             # Benchmark
@@ -71,8 +81,8 @@ class EquityCurveVisualizer:
                        color='#A23B72', linestyle='--', alpha=0.7, zorder=2)
             
             # Fill between start and equity curve
-            start_value = equity_curve[0]
-            ax.fill_between(dates, start_value, equity_curve, alpha=0.1, 
+            start_value = equity_values[0]
+            ax.fill_between(dates, start_value, equity_values, alpha=0.1, 
                             color='#2E86AB', zorder=1)
             
             # Formatting
@@ -97,7 +107,7 @@ class EquityCurveVisualizer:
     
     def plot_equity_with_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: Union[List[float], pd.Series],
         dates: Optional[List] = None,
         title: str = "Equity Curve with Drawdown Bands",
         save_path: Optional[str] = None,
@@ -106,7 +116,7 @@ class EquityCurveVisualizer:
         Plot equity curve with drawdown bands.
         
         Args:
-            equity_curve: List of portfolio values
+            equity_curve: List of portfolio values or pandas Series
             dates: Optional dates
             title: Plot title
             save_path: Optional path to save figure
@@ -115,10 +125,17 @@ class EquityCurveVisualizer:
             matplotlib figure or None if plotting failed
         """
         try:
-            if dates is None:
-                dates = range(len(equity_curve))
+            # Handle pandas Series
+            if isinstance(equity_curve, pd.Series):
+                if dates is None:
+                    dates = equity_curve.index
+                equity_values = equity_curve.values
+            else:
+                equity_values = equity_curve
+                if dates is None:
+                    dates = range(len(equity_values))
             
-            equity_array = np.array(equity_curve)
+            equity_array = np.array(equity_values, dtype=float)  # Ensure float
             
             # Calculate running maximum and drawdown
             running_max = np.maximum.accumulate(equity_array)
@@ -128,9 +145,9 @@ class EquityCurveVisualizer:
                                            gridspec_kw={'height_ratios': [3, 1]})
             
             # Top plot: Equity curve with drawdown bands
-            ax1.plot(dates, equity_curve, linewidth=2.5, color='#2E86AB', 
+            ax1.plot(dates, equity_values, linewidth=2.5, color='#2E86AB', 
                     label='Portfolio', zorder=3)
-            ax1.fill_between(dates, equity_array[0], equity_curve, alpha=0.1, 
+            ax1.fill_between(dates, equity_array[0], equity_values, alpha=0.1, 
                             color='#2E86AB', zorder=1)
             ax1.plot(dates, running_max, linewidth=1.5, color='#F18F01', 
                     linestyle='--', alpha=0.7, label='Peak', zorder=2)
@@ -163,7 +180,7 @@ class EquityCurveVisualizer:
     
     def plot_underwater(
         self,
-        equity_curve: List[float],
+        equity_curve: Union[List[float], pd.Series],
         dates: Optional[List] = None,
         title: str = "Underwater Plot (Drawdown Over Time)",
         save_path: Optional[str] = None,
@@ -172,7 +189,7 @@ class EquityCurveVisualizer:
         Underwater plot showing drawdown periods as shaded regions.
         
         Args:
-            equity_curve: List of portfolio values
+            equity_curve: List of portfolio values or pandas Series
             dates: Optional dates
             title: Plot title
             save_path: Optional path to save figure
@@ -181,10 +198,17 @@ class EquityCurveVisualizer:
             matplotlib figure or None if plotting failed
         """
         try:
-            if dates is None:
-                dates = range(len(equity_curve))
+            # Handle pandas Series
+            if isinstance(equity_curve, pd.Series):
+                if dates is None:
+                    dates = equity_curve.index
+                equity_values = equity_curve.values
+            else:
+                equity_values = equity_curve
+                if dates is None:
+                    dates = range(len(equity_values))
             
-            equity_array = np.array(equity_curve)
+            equity_array = np.array(equity_values, dtype=float)  # Ensure float
             running_max = np.maximum.accumulate(equity_array)
             drawdown = ((equity_array - running_max) / running_max) * 100
             
