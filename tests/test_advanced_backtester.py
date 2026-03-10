@@ -23,4 +23,5 @@ def test_advanced_backtester_returns_metrics_and_costs():
 
     assert not result.equity_curve.empty
     assert result.equity_curve["transaction_cost"].sum() > 0
+    assert result.equity_curve["transaction_cost"].iloc[0] == 0
     assert {"total_return", "sharpe_ratio", "max_drawdown", "win_rate"}.issubset(result.metrics.keys())

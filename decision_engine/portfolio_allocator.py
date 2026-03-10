@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from decision_engine.risk_manager import RiskManager
+from risk_management.confidence_position_sizer import ConfidencePositionSizer
 
 
 class PortfolioAllocator:
@@ -13,6 +14,7 @@ class PortfolioAllocator:
         ml_tilt_strength=0.15,
         max_position_weight=0.25,
         max_gross_exposure=1.0,
+        confidence_sizer=None,
     ):
 
         self.risk_manager = risk_manager or RiskManager(max_position_weight=max_position_weight)
@@ -20,6 +22,7 @@ class PortfolioAllocator:
         self.ml_tilt_strength = ml_tilt_strength
         self.max_position_weight = max_position_weight
         self.max_gross_exposure = max_gross_exposure
+        self.confidence_sizer = confidence_sizer or ConfidencePositionSizer()
 
     @staticmethod
     def _signal_to_direction(signal, score=0.0):
@@ -79,10 +82,30 @@ class PortfolioAllocator:
                 active["signal_direction"] * active["sentiment_composite"]
             ).clip(lower=-1.0, upper=1.0)
         ).clip(lower=0.5, upper=1.5)
+        confidences = (
+            active["prediction_confidence"]
+            if "prediction_confidence" in active.columns
+            else pd.Series(1.0, index=active.index)
+        ).fillna(1.0)
+        entropies = (
+            active["prediction_entropy"]
+            if "prediction_entropy" in active.columns
+            else pd.Series(0.0, index=active.index)
+        ).fillna(0.0)
 
         raw_weights = []
-        for parity_weight, conviction_score, alignment_score in zip(parity_weights, conviction, alignment):
-            raw_weights.append(parity_weight * conviction_score * alignment_score)
+        for parity_weight, conviction_score, alignment_score, confidence, entropy in zip(
+            parity_weights,
+            conviction,
+            alignment,
+            confidences,
+            entropies,
+        ):
+            confidence_multiplier = self.confidence_sizer.confidence_multiplier(
+                confidence,
+                entropy=entropy,
+            )
+            raw_weights.append(parity_weight * conviction_score * alignment_score * confidence_multiplier)
 
         total_raw = sum(raw_weights)
         if total_raw <= 0:

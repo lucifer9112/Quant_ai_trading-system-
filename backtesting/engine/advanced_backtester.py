@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from decision_engine.risk_manager import RiskManager
+from risk_management.confidence_position_sizer import ConfidencePositionSizer
 
 
 @dataclass
@@ -25,6 +26,8 @@ class AdvancedBacktester:
         max_drawdown_pct=0.20,
         max_position_weight=0.25,
         risk_manager=None,
+        bias_safe=True,
+        execution_delay_bars=1,
     ):
 
         self.initial_capital = initial_capital
@@ -39,6 +42,9 @@ class AdvancedBacktester:
             capital=initial_capital,
             max_drawdown_limit=max_drawdown_pct,
         )
+        self.bias_safe = bias_safe
+        self.execution_delay_bars = max(0, execution_delay_bars)
+        self.confidence_sizer = ConfidencePositionSizer()
 
     def _normalize_input(self, df):
 
@@ -101,8 +107,31 @@ class AdvancedBacktester:
         raw_weights = self.risk_manager.risk_parity_weights(volatilities.tolist())
 
         weights = {}
-        for symbol, direction, raw_weight in zip(active["symbol"], active["direction"], raw_weights):
-            weights[symbol] = float(np.clip(direction * raw_weight, -self.max_position_weight, self.max_position_weight))
+        confidences = (
+            active["prediction_confidence"]
+            if "prediction_confidence" in active.columns
+            else pd.Series(1.0, index=active.index)
+        ).fillna(1.0)
+        entropies = (
+            active["prediction_entropy"]
+            if "prediction_entropy" in active.columns
+            else pd.Series(0.0, index=active.index)
+        ).fillna(0.0)
+        for symbol, direction, raw_weight, confidence, entropy in zip(
+            active["symbol"],
+            active["direction"],
+            raw_weights,
+            confidences,
+            entropies,
+        ):
+            multiplier = self.confidence_sizer.confidence_multiplier(confidence, entropy=entropy)
+            weights[symbol] = float(
+                np.clip(
+                    direction * raw_weight * multiplier,
+                    -self.max_position_weight,
+                    self.max_position_weight,
+                )
+            )
 
         gross_exposure = sum(abs(weight) for weight in weights.values())
         if gross_exposure > 1.0 and gross_exposure > 0:
@@ -119,6 +148,7 @@ class AdvancedBacktester:
         peak_value = portfolio_value
         previous_prices = {}
         current_weights = {}
+        pending_weight_queue = [{} for _ in range(self.execution_delay_bars)] if self.bias_safe else []
         entry_prices = {}
         snapshots = []
         rebalances = 0
@@ -160,14 +190,19 @@ class AdvancedBacktester:
 
             if rebalances % self.rebalance_frequency == 0:
                 target_weights = self._target_weights(day_slice, signal_column)
+                executable_weights = target_weights
+                if self.bias_safe and self.execution_delay_bars > 0:
+                    pending_weight_queue.append(target_weights)
+                    executable_weights = pending_weight_queue.pop(0)
+
                 turnover = sum(
-                    abs(target_weights.get(symbol, 0.0) - current_weights.get(symbol, 0.0))
-                    for symbol in set(target_weights) | set(current_weights)
+                    abs(executable_weights.get(symbol, 0.0) - current_weights.get(symbol, 0.0))
+                    for symbol in set(executable_weights) | set(current_weights)
                 )
                 cost_rate = (self.transaction_cost_bps + self.slippage_bps) / 10000.0
                 transaction_cost = portfolio_value * turnover * cost_rate
                 portfolio_value -= transaction_cost
-                current_weights = {symbol: weight for symbol, weight in target_weights.items() if weight != 0}
+                current_weights = {symbol: weight for symbol, weight in executable_weights.items() if weight != 0}
 
                 for symbol, weight in current_weights.items():
                     if symbol not in entry_prices or weight == 0:

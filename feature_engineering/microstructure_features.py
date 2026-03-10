@@ -102,20 +102,9 @@ class MicrostructureFeatures:
         )
         
         # Correlation of price change and volume change
-        def price_vol_correlation(window_data):
-            if len(window_data) < 2:
-                return 0
-            price_change = np.diff(window_data['price'].values)
-            vol_change = np.diff(window_data['volume'].values)
-            if np.std(vol_change) == 0 or np.std(price_change) == 0:
-                return 0
-            return np.corrcoef(price_change, vol_change)[0, 1]
-        
-        temp_df = pd.DataFrame({'price': close, 'volume': volume})
-        df["price_volume_correlation"] = temp_df.rolling(self.window).apply(
-            price_vol_correlation,
-            raw=False
-        )
+        price_change = close.pct_change()
+        volume_change = volume.pct_change()
+        df["price_volume_correlation"] = price_change.rolling(self.window).corr(volume_change)
         df["price_volume_correlation"] = df["price_volume_correlation"].fillna(0)
         
         # 2. Volume-weighted momentum

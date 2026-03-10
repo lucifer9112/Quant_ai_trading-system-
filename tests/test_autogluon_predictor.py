@@ -2,6 +2,7 @@ import builtins
 import sys
 import types
 
+import pandas as pd
 import pytest
 
 from ml_models.autogluon.autogluon_predictor import AutoGluonPredictor
@@ -84,3 +85,44 @@ def test_predict_raises_clear_error_when_model_artifact_missing(tmp_path):
 
     with pytest.raises(FileNotFoundError, match="AutoGluon model not found"):
         predictor.predict(FakeFrame({"Close": [100]}))
+
+
+def test_predict_adds_confidence_columns_when_probabilities_available(monkeypatch, tmp_path):
+
+    class FakeLoadedPredictor:
+
+        def predict(self, df):
+
+            return [1, 0]
+
+        def predict_proba(self, df):
+
+            return pd.DataFrame({
+                "SELL": [0.1, 0.6],
+                "BUY": [0.9, 0.4],
+            })
+
+    class FakeTabularPredictor:
+
+        @staticmethod
+        def load(path):
+
+            return FakeLoadedPredictor()
+
+    autogluon_module = types.ModuleType("autogluon")
+    tabular_module = types.ModuleType("autogluon.tabular")
+    tabular_module.TabularPredictor = FakeTabularPredictor
+    autogluon_module.tabular = tabular_module
+
+    monkeypatch.setitem(sys.modules, "autogluon", autogluon_module)
+    monkeypatch.setitem(sys.modules, "autogluon.tabular", tabular_module)
+
+    model_path = tmp_path / "test-model"
+    model_path.mkdir(parents=True, exist_ok=True)
+    (model_path / "predictor.pkl").write_text("stub", encoding="utf-8")
+
+    predictor = AutoGluonPredictor(model_path=str(model_path))
+    result = predictor.predict(FakeFrame({"Close": [100, 101]}))
+
+    assert "prediction_confidence" in result
+    assert "prediction_entropy" in result

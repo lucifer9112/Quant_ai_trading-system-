@@ -6,6 +6,7 @@ __all__ = [
     "DynamicWeighting",
     "ProbabilityCalibrator",
     "Phase2MLEnsemble",
+    "PredictionConfidenceScorer",
 ]
 
 
@@ -26,5 +27,8 @@ def __getattr__(name):
     if name == "Phase2MLEnsemble":
         from .phase2_ml_ensemble import Phase2MLEnsemble
         return Phase2MLEnsemble
+    if name == "PredictionConfidenceScorer":
+        from .prediction_confidence import PredictionConfidenceScorer
+        return PredictionConfidenceScorer
 
     raise AttributeError(f"module 'ml_models' has no attribute '{name}'")

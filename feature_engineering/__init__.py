@@ -7,6 +7,7 @@ from .regime_conditional_features import RegimeConditionalFeatures
 from .nonlinear_features import NonlinearFeatures
 from .feature_analyzer import FeatureAnalyzer
 from .comprehensive_pipeline import ComprehensiveFeaturePipeline
+from .panel_feature_expander import PanelFeatureExpander
 
 __all__ = [
     "MicrostructureFeatures",
@@ -16,4 +17,5 @@ __all__ = [
     "NonlinearFeatures",
     "FeatureAnalyzer",
     "ComprehensiveFeaturePipeline",
+    "PanelFeatureExpander",
 ]

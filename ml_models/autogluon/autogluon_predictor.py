@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from ml_models.prediction_confidence import PredictionConfidenceScorer
+
 
 class AutoGluonPredictor:
 
@@ -8,6 +10,7 @@ class AutoGluonPredictor:
         self.model_path = model_path
         self.prediction_column = prediction_column
         self._predictor = None
+        self.confidence_scorer = PredictionConfidenceScorer()
 
     def _load_predictor(self):
 
@@ -41,5 +44,16 @@ class AutoGluonPredictor:
 
         result = df.copy()
         result[self.prediction_column] = predictions
+
+        if hasattr(predictor, "predict_proba"):
+            try:
+                probabilities = predictor.predict_proba(df)
+                result = self.confidence_scorer.merge(
+                    result,
+                    probabilities,
+                    predicted_labels=predictions,
+                )
+            except Exception:
+                pass
 
         return result

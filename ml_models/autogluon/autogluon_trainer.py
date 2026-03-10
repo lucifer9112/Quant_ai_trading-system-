@@ -1,5 +1,10 @@
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
+from validation.walk_forward_validator import WalkForwardValidator
+
 
 class AutoGluonTrainer:
 
@@ -53,3 +58,64 @@ class AutoGluonTrainer:
         )
 
         return predictor
+
+    def walk_forward_validate(
+        self,
+        df,
+        *,
+        date_col="Date",
+        time_limit=300,
+        presets="medium_quality_faster_train",
+        validator=None,
+        excluded_columns=None,
+    ):
+        if date_col not in df.columns:
+            raise ValueError(f"Training dataframe must include date column '{date_col}'.")
+        if self.label not in df.columns:
+            raise ValueError(f"Training dataframe must include label column '{self.label}'.")
+
+        validator = validator or WalkForwardValidator()
+        folds = validator.split(df, date_col=date_col)
+        excluded = set(excluded_columns or [])
+        excluded.add(date_col)
+
+        fold_results = []
+        for fold in folds:
+            train_df = df.iloc[fold.train_idx].copy()
+            val_df = df.iloc[fold.val_idx].copy()
+
+            train_frame = train_df.drop(columns=list(excluded & set(train_df.columns)), errors="ignore")
+            val_frame = val_df.drop(columns=list(excluded & set(val_df.columns)), errors="ignore")
+
+            predictor = self._predictor_class()(
+                label=self.label,
+                path=str(Path(self.model_path) / f"walk_forward_fold_{fold.fold_idx}"),
+                problem_type=self.problem_type,
+                eval_metric=self.eval_metric,
+            )
+            predictor.fit(
+                train_data=train_frame,
+                time_limit=time_limit,
+                presets=presets,
+            )
+            predictions = np.asarray(predictor.predict(val_frame.drop(columns=[self.label], errors="ignore")))
+            actuals = np.asarray(val_frame[self.label])
+            accuracy = float((predictions == actuals).mean())
+            fold_results.append(
+                {
+                    "fold": fold.fold_idx,
+                    "train_start": fold.train_start,
+                    "train_end": fold.train_end,
+                    "val_start": fold.val_start,
+                    "val_end": fold.val_end,
+                    "accuracy": accuracy,
+                    "val_size": int(len(val_frame)),
+                }
+            )
+
+        accuracies = [fold["accuracy"] for fold in fold_results]
+        return {
+            "folds": fold_results,
+            "mean_accuracy": float(np.mean(accuracies)) if accuracies else np.nan,
+            "std_accuracy": float(np.std(accuracies)) if accuracies else np.nan,
+        }

@@ -27,3 +27,24 @@ def test_portfolio_allocator_constructs_multi_asset_weights():
     assert (gross_by_date <= 1.000001).all()
     assert result.loc[result["symbol"] == "AAA", "portfolio_weight"].iloc[0] > 0
     assert result.loc[result["symbol"] == "BBB", "portfolio_weight"].iloc[0] < 0
+
+
+def test_portfolio_allocator_uses_prediction_confidence_in_weighting():
+
+    frame = pd.DataFrame({
+        "Date": pd.to_datetime(["2024-01-01", "2024-01-01"]),
+        "symbol": ["AAA", "BBB"],
+        "Close": [100.0, 100.0],
+        "final_signal": ["BUY", "BUY"],
+        "strategy_score": [0.5, 0.5],
+        "ml_prediction": [0.5, 0.5],
+        "sentiment_composite": [0.0, 0.0],
+        "prediction_confidence": [0.9, 0.55],
+        "rolling_vol_20": [0.2, 0.2],
+    })
+
+    allocator = PortfolioAllocator(max_position_weight=1.0, max_gross_exposure=1.0)
+    result = allocator.construct_portfolio(frame, capital=100000)
+
+    weights = result.set_index("symbol")["portfolio_weight"]
+    assert weights["AAA"] > weights["BBB"]

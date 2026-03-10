@@ -16,4 +16,7 @@ class TradingDashboard:
         if "portfolio_value" in df.columns:
             st.line_chart(df["portfolio_value"])
 
+        if "prediction_confidence" in df.columns:
+            st.line_chart(df["prediction_confidence"])
+
         st.dataframe(df.tail())
