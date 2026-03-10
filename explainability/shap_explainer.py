@@ -42,8 +42,11 @@ class ShapExplainer:
             return self._fallback_report(model, sampled)
 
         background = sampled.head(min(self.background_size, len(sampled)))
-        explainer = shap.Explainer(model, background)
-        explanation = explainer(sampled)
+        try:
+            explainer = shap.Explainer(model, background)
+            explanation = explainer(sampled)
+        except Exception:
+            return self._fallback_report(model, sampled)
         values = np.asarray(explanation.values)
 
         if values.ndim == 3:

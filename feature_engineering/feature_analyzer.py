@@ -148,10 +148,11 @@ class FeatureAnalyzer:
         if numeric.empty:
             return []
 
-        variances = numeric.var()
-        max_var = variances.max()
-        threshold = max_var * self.variance_threshold
-        low_var_features = variances[variances < threshold].index.tolist()
+        filled = numeric.fillna(numeric.mean(numeric_only=True)).fillna(0.0)
+        std = filled.std().replace(0, np.nan)
+        standardized = (filled - filled.mean()) / std
+        variances = standardized.var().fillna(0.0)
+        low_var_features = variances[variances <= self.variance_threshold].index.tolist()
         logger.info("Found %d low-variance features", len(low_var_features))
         return low_var_features
 
