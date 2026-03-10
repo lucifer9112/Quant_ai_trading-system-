@@ -19,3 +19,5 @@ mlflow
 psutil
 gymnasium
 stable-baselines3
+lightgbm
+catboost
