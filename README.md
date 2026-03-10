@@ -101,7 +101,10 @@ python main.py --mode phase3 --data market_data.csv
 ### Option 3: Run Legacy System
 
 ```bash
-# Single-asset or multi-asset mode (from config.yaml)
+# Default command: single-asset or multi-asset mode from config.yaml
+python main.py
+
+# Explicit legacy mode
 python main.py --mode legacy --config config.yaml
 ```
 
@@ -1413,4 +1416,3 @@ python apps/data/build_sentiment_inputs.py --require-twitter
 ```
 
 On unsupported runtimes this fails early with an explicit Python 3.11 requirement instead of silently falling back.
-
