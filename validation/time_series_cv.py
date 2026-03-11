@@ -93,7 +93,7 @@ class PurgedWalkForwardSplitter:
 
         ordered = df.copy()
         ordered[date_col] = pd.to_datetime(ordered[date_col], errors="coerce")
-        ordered = ordered.dropna(subset=[date_col]).sort_values(date_col).reset_index()
+        ordered = ordered.dropna(subset=[date_col]).sort_values(date_col).reset_index(drop=True)
 
         unique_dates = ordered[date_col].drop_duplicates().to_numpy()
         if len(unique_dates) == 0:
@@ -122,8 +122,8 @@ class PurgedWalkForwardSplitter:
             train_mask = ordered[date_col].isin(train_dates)
             val_mask = ordered[date_col].isin(validation_dates)
 
-            train_idx = ordered.loc[train_mask, "index"].to_numpy(dtype=int)
-            val_idx = ordered.loc[val_mask, "index"].to_numpy(dtype=int)
+            train_idx = np.flatnonzero(train_mask.to_numpy())
+            val_idx = np.flatnonzero(val_mask.to_numpy())
 
             if len(train_idx) == 0 or len(val_idx) == 0:
                 break
@@ -169,12 +169,15 @@ class TimeSeriesCrossValidator:
         date_col: str = "Date",
         target_col: str,
     ) -> Dict[str, Any]:
-        folds = self.splitter.split(df, date_col=date_col)
+        dataset = df.copy()
+        dataset[date_col] = pd.to_datetime(dataset[date_col], errors="coerce")
+        dataset = dataset.dropna(subset=[date_col]).sort_values(date_col).reset_index(drop=True)
+        folds = self.splitter.split(dataset, date_col=date_col)
         fold_results: List[Dict[str, Any]] = []
 
         for fold in folds:
-            train_df = df.iloc[fold.train_idx].copy()
-            val_df = df.iloc[fold.val_idx].copy()
+            train_df = dataset.iloc[fold.train_idx].copy()
+            val_df = dataset.iloc[fold.val_idx].copy()
             model = train_fn(train_df)
             predictions = np.asarray(predict_fn(model, val_df))
             actuals = np.asarray(val_df[target_col])

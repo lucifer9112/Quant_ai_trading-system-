@@ -2,9 +2,11 @@ import builtins
 import sys
 import types
 
+import pandas as pd
 import pytest
 
 from ml_models.autogluon.autogluon_trainer import AutoGluonTrainer
+from validation.walk_forward_validator import WalkForwardValidator
 
 
 class FakeFrame:
@@ -91,3 +93,44 @@ def test_trainer_raises_clear_error_when_autogluon_missing(monkeypatch, tmp_path
 
     with pytest.raises(RuntimeError, match="autogluon is not installed"):
         trainer.train(FakeFrame(columns=["target_return"]))
+
+
+def test_walk_forward_validate_handles_non_contiguous_source_index(tmp_path):
+
+    class FakeTabularPredictor:
+
+        def __init__(self, label, path, problem_type, eval_metric):
+
+            self.label = label
+
+        def fit(self, train_data, time_limit, presets):
+
+            return self
+
+        def predict(self, data):
+
+            return pd.Series([0] * len(data), index=data.index)
+
+    frame = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(
+                ["2024-01-03", "2024-01-01", "2024-01-04", "2024-01-02"]
+            ),
+            "feature_a": [1.0, 2.0, 3.0, 4.0],
+            "target_return": [0, 0, 0, 0],
+        },
+        index=[100, 200, 300, 400],
+    )
+
+    trainer = AutoGluonTrainer(model_path=str(tmp_path / "autogluon-model"))
+    trainer._tabular_predictor = FakeTabularPredictor
+
+    summary = trainer.walk_forward_validate(
+        frame,
+        validator=WalkForwardValidator(initial_window=2, forecast_horizon=1, step_size=1),
+        time_limit=1,
+        presets="medium_quality_faster_train",
+    )
+
+    assert len(summary["folds"]) == 2
+    assert summary["mean_accuracy"] == 1.0

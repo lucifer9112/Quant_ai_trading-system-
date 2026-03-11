@@ -74,15 +74,19 @@ class AutoGluonTrainer:
         if self.label not in df.columns:
             raise ValueError(f"Training dataframe must include label column '{self.label}'.")
 
+        working_df = df.copy()
+        working_df[date_col] = pd.to_datetime(working_df[date_col], errors="coerce")
+        working_df = working_df.dropna(subset=[date_col]).sort_values(date_col).reset_index(drop=True)
+
         validator = validator or WalkForwardValidator()
-        folds = validator.split(df, date_col=date_col)
+        folds = validator.split(working_df, date_col=date_col)
         excluded = set(excluded_columns or [])
         excluded.add(date_col)
 
         fold_results = []
         for fold in folds:
-            train_df = df.iloc[fold.train_idx].copy()
-            val_df = df.iloc[fold.val_idx].copy()
+            train_df = working_df.iloc[fold.train_idx].copy()
+            val_df = working_df.iloc[fold.val_idx].copy()
 
             train_frame = train_df.drop(columns=list(excluded & set(train_df.columns)), errors="ignore")
             val_frame = val_df.drop(columns=list(excluded & set(val_df.columns)), errors="ignore")

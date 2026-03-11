@@ -61,8 +61,11 @@ class WalkForwardValidator:
         df: pd.DataFrame,
         fold: ValidationFold,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        train_df = df.iloc[fold.train_idx].copy()
-        val_df = df.iloc[fold.val_idx].copy()
+        dataset = df.copy()
+        dataset["Date"] = pd.to_datetime(dataset["Date"], errors="coerce")
+        dataset = dataset.dropna(subset=["Date"]).sort_values("Date").reset_index(drop=True)
+        train_df = dataset.iloc[fold.train_idx].copy()
+        val_df = dataset.iloc[fold.val_idx].copy()
         return train_df, val_df
 
     def cross_validate(
