@@ -30,7 +30,7 @@ class TwitterSentimentExporter:
 
         return dates.dt.normalize()
 
-    def build_records(self, universe, limit_per_symbol=50):
+    def build_records(self, universe, limit_per_symbol=50, strict=False):
 
         records = []
 
@@ -39,9 +39,13 @@ class TwitterSentimentExporter:
             try:
                 tweets = self.collector.search(query, limit=limit_per_symbol)
             except RuntimeError as exc:
+                if strict:
+                    raise RuntimeError(f"Twitter sentiment collection unavailable: {exc}") from exc
                 logger.warning("Twitter sentiment collection unavailable: %s", exc)
                 break
             except Exception as exc:
+                if strict:
+                    raise RuntimeError(f"Twitter sentiment collection failed for {asset.symbol}: {exc}") from exc
                 logger.warning("Skipping Twitter sentiment for %s: %s", asset.symbol, exc)
                 continue
 

@@ -9,7 +9,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.universe import UniverseManager
-from core.runtime import ensure_twitter_runtime_supported
 from data_pipeline.news_data.news_sentiment_exporter import NewsSentimentExporter
 from data_pipeline.twitter_data.twitter_sentiment_exporter import TwitterSentimentExporter
 from utils.config_loader import ConfigLoader
@@ -88,11 +87,13 @@ def main():
     )
 
     logger.info("Building Twitter sentiment inputs")
-    if args.require_twitter:
-        ensure_twitter_runtime_supported()
     twitter_df = build_with_fallback(
         "Twitter",
-        lambda: TwitterSentimentExporter().build_records(universe, limit_per_symbol=args.twitter_limit),
+        lambda: TwitterSentimentExporter().build_records(
+            universe,
+            limit_per_symbol=args.twitter_limit,
+            strict=args.require_twitter,
+        ),
         TwitterSentimentExporter.OUTPUT_COLUMNS,
         required=args.require_twitter,
     )

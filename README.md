@@ -37,7 +37,7 @@ This system delivers:
 
 - **Target**: Python 3.11 (recommended)
 - **Supported**: Python 3.10+
-- **Note**: Full Twitter sentiment pipeline requires Python 3.11 (`snscrape` limitation)
+- **Note**: Python 3.11 is still the recommended runtime, but the Twitter sentiment pipeline now attempts collection on Python 3.12+ and only fails on actual scraper/runtime errors.
 
 ### Setup
 
@@ -861,20 +861,19 @@ Reason:
 
 - the full market, training, and backtesting stack is broadly portable
 - the Twitter sentiment collection path depends on `snscrape`
-- `snscrape` is not reliable on Python 3.12+ in the environments used for this project
+- `snscrape` can still be environment-sensitive, so Twitter collection is handled as an optional capability with graceful fallback
 
 Practical consequence:
 
-- Python 3.12+ may still run the core pipeline
-- Twitter sentiment collection is only considered supported on Python 3.11
-- `apps/data/build_sentiment_inputs.py --require-twitter` now fails fast on unsupported runtimes with a clear message
+- Python 3.12+ may still run the core pipeline, including Twitter sentiment collection when `snscrape` imports and executes successfully
+- `apps/data/build_sentiment_inputs.py --require-twitter` now fails only when Twitter collection actually cannot be performed
 - plain `apps/data/build_sentiment_inputs.py` still falls back gracefully to empty Twitter sentiment inputs when compatibility is not available
 
 ### 4.2 `apps/`
 
 - `apps/batch_train/train_tabular.py`: pooled tabular model training entrypoint.
 - `apps/data/build_sentiment_inputs.py`: builds `news_sentiment.csv`, `twitter_sentiment.csv`, and `sector_sentiment.csv` for the sentiment fusion pipeline.
-- `apps/data/build_sentiment_inputs.py --require-twitter`: enforces Python 3.11 compatibility for Twitter sentiment generation.
+- `apps/data/build_sentiment_inputs.py --require-twitter`: makes Twitter sentiment generation mandatory and fails on real collector/runtime errors.
 - `apps/live_trading/live_signal_engine.py`: combines online feature state and the signal generator to produce live trading signals.
 - `apps/live_trading/run_live_signals.py`: CLI wrapper for live signal streaming.
 - `apps/common/input_loaders.py`: helper to read optional CSV, Parquet, or JSON inputs.
@@ -1415,4 +1414,4 @@ If you want Twitter sentiment to be mandatory, use:
 python apps/data/build_sentiment_inputs.py --require-twitter
 ```
 
-On unsupported runtimes this fails early with an explicit Python 3.11 requirement instead of silently falling back.
+With `--require-twitter`, the command now fails only when Twitter collection actually cannot be completed instead of silently falling back.

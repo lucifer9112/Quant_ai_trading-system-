@@ -13,7 +13,12 @@ def test_is_target_python_rejects_python_312():
     assert not is_target_python((3, 12, 0))
 
 
-def test_ensure_twitter_runtime_supported_raises_for_python_312():
+def test_ensure_twitter_runtime_supported_allows_python_312():
 
-    with pytest.raises(RuntimeError, match="Python 3.11"):
-        ensure_twitter_runtime_supported((3, 12, 12))
+    ensure_twitter_runtime_supported((3, 12, 12))
+
+
+def test_ensure_twitter_runtime_supported_raises_for_python_39():
+
+    with pytest.raises(RuntimeError, match="Python 3.10 or newer"):
+        ensure_twitter_runtime_supported((3, 9, 18))

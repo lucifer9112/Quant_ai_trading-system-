@@ -34,9 +34,13 @@ class TwitterCollector:
                 if len(tweets) >= limit:
                     break
 
+                text = getattr(tweet, "rawContent", None) or getattr(tweet, "content", None)
+                if not text:
+                    continue
+
                 tweets.append({
                     "date": tweet.date,
-                    "text": tweet.content
+                    "text": text,
                 })
         except RuntimeError:
             raise

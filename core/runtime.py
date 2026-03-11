@@ -3,6 +3,8 @@ import sys
 
 TARGET_PYTHON_MAJOR = 3
 TARGET_PYTHON_MINOR = 11
+MIN_TWITTER_PYTHON_MAJOR = 3
+MIN_TWITTER_PYTHON_MINOR = 10
 
 
 def version_tuple(version_info=None):
@@ -35,12 +37,14 @@ def is_target_python(version_info=None):
 
 def ensure_twitter_runtime_supported(version_info=None):
 
-    if is_target_python(version_info):
+    major, minor, _ = version_tuple(version_info)
+
+    if (major, minor) >= (MIN_TWITTER_PYTHON_MAJOR, MIN_TWITTER_PYTHON_MINOR):
         return
 
     raise RuntimeError(
-        "Twitter sentiment collection currently requires Python 3.11 because "
-        "snscrape is incompatible with Python 3.12+ in this project setup. "
+        "Twitter sentiment collection requires Python 3.10+ so the scraping "
+        "dependencies can be imported reliably. "
         f"Current runtime: Python {format_version(version_info)}. "
-        "Use Python 3.11 to enable Twitter sentiment inputs."
+        "Use Python 3.10 or newer to enable Twitter sentiment inputs."
     )

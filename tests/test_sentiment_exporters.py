@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from core.schemas import AssetMetadata
 from core.universe import UniverseDefinition
@@ -140,3 +141,19 @@ def test_twitter_sentiment_exporter_returns_empty_frame_when_collection_unavaila
 
     assert list(result.columns) == TwitterSentimentExporter.OUTPUT_COLUMNS
     assert result.empty
+
+
+def test_twitter_sentiment_exporter_raises_in_strict_mode_when_collection_unavailable():
+
+    universe = UniverseDefinition(
+        name="demo",
+        assets=(AssetMetadata(symbol="TCS", sector="Information Technology"),),
+    )
+
+    exporter = TwitterSentimentExporter(
+        collector=FailingTwitterCollector(),
+        scorer=StubTwitterScorer(),
+    )
+
+    with pytest.raises(RuntimeError, match="collection unavailable"):
+        exporter.build_records(universe, limit_per_symbol=1, strict=True)
